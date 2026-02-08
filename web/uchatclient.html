@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ciallo～(∠・ω< )⌒★</title>
+      <style>
+        #sidebar {
+          width: 200px;
+          background: #333;
+          color: white;
+          display: flex;
+          flex-direction: column;
+        }
+
+        #sidebar h2 {
+          margin: 0;
+          padding: 15px;
+          background: #222;
+          font-size: 16px;
+          text-align: center;
+        }
+
+        .channel {
+          padding: 10px;
+          cursor: pointer;
+          border-bottom: 1px solid #444;
+        }
+
+        .channel:hover,
+        .channel.active {
+          background: #555;
+        }
+
+        #main {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+        }
+
+        #chat {
+          flex: 1;
+          padding: 10px;
+          overflow-y: auto;
+          background: white;
+        }
+
+        #chat p {
+          margin: 5px 0;
+        }
+
+        #input-area {
+          display: flex;
+          border-top: 1px solid #ccc;
+        }
+
+        #msg {
+          flex: 1;
+          padding: 10px;
+          border: none;
+          outline: none;
+        }
+
+        button {
+          padding: 10px 15px;
+          border: none;
+          background: #333;
+          color: white;
+          cursor: pointer;
+        }
+
+        #auth {
+          position: absolute;
+          inset: 0;
+          background: rgba(0, 0, 0, 0.6);
+          display: flex;
+          justify-content: center;
+          align-items: center;
+        }
+
+        #auth form {
+          background: white;
+          padding: 20px;
+          border-radius: 8px;
+          width: 300px;
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+        }
+
+        #auth input {
+          padding: 8px;
+        }
+
+        #logout-btn {
+          margin-top: auto;
+          padding: 10px;
+          background: #222;
+          border: none;
+          color: white;
+        }
+
+
+
+
+
+        body {
+          margin: 0;
+        }
+
+        .bg {
+          position: fixed;              /* stay fixed behind content */
+          inset: 0;                     /* top/right/bottom/left = 0 */
+          background-image: url("./bg.png");  /* <-- put your image here */
+          background-size: cover;       /* scale to cover, may crop */
+          background-position: center center;
+          background-repeat: no-repeat;
+          z-index: -1;                  /* behind page content */
+          filter: brightness(0.6);      /* darken a bit so text is readable */
+        }
+
+        .center {
+          height: 100vh;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .card {
+          height: 50vh;
+          width: 100vh;
+          display: flex;
+        }
+      </style>
+</head>
+
+<body>
+  <div class="bg"></div>
+
+  <main class="center">
+    <div class="card">
+      <div id="sidebar">
+        <h2>频道</h2>
+        <div id="channels"></div>
+        <button id="logout-btn">登出</button>
+      </div>
+
+      <div id="main">
+        <div id="chat"></div>
+        <div id="input-area">
+          <input type="text" id="msg" placeholder="输入消息...">
+          <button id="send">发送</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <div id="auth">
+    <form id="auth-form">
+      <h3>登录 / 注册</h3>
+      <input id="username" placeholder="用户名" required>
+      <input id="password" type="password" placeholder="密码" required>
+      <button type="submit">登录 / 注册</button>
+    </form>
+  </div>
+
+  <script>
+    // =========== 配置区 ===============
+    const API_BASE = "http://localhost:8080"; // ← 你的C++服务端HTTP接口地址
+    // 示例接口设计（你需在服务端实现相应端点）:
+    // POST /register {username, password}
+    // POST /login {username, password}
+    // POST /logout {token}
+    // POST /send {token, channel, message}
+    // GET  /poll?token=xxx&channel=yyy   <-- 长轮询接口
+    // GET  /channels   返回可用频道列表，如 ["情感","生活","新闻"]
+    // =================================
+
+    let token = null;
+    let currentChannel = null;
+    let polling = false;
+
+    // 登录/注册
+    document.getElementById("auth-form").onsubmit = async e => {
+      e.preventDefault();
+      const username = usernameInput.value = document.getElementById("username").value.trim();
+      const password = document.getElementById("password").value.trim();
+      try {
+        let res = await fetch(API_BASE + "/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username, password })
+        });
+        let data = await res.json();
+        if (data.token) {
+          token = data.token;
+          document.getElementById("auth").style.display = "none";
+          await loadChannels();
+        } else {
+          alert(data.error || "登录失败");
+        }
+      } catch (err) {
+        console.error(err);
+        alert("连接服务器失败");
+      }
+    };
+
+    // 登出
+    document.getElementById("logout-btn").onclick = async () => {
+      if (!token) return;
+      await fetch(API_BASE + "/logout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token })
+      });
+      token = null;
+      currentChannel = null;
+      document.getElementById("channels").innerHTML = "";
+      document.getElementById("chat").innerHTML = "";
+      document.getElementById("auth").style.display = "flex";
+    };
+
+    // 加载频道
+    async function loadChannels() {
+      let res = await fetch(API_BASE + "/channels");
+      let list = await res.json();
+      const container = document.getElementById("channels");
+      container.innerHTML = "";
+      list.forEach(ch => {
+        let div = document.createElement("div");
+        div.className = "channel";
+        div.textContent = ch;
+        div.onclick = () => selectChannel(ch, div);
+        container.appendChild(div);
+      });
+    }
+
+    // 切换频道
+    function selectChannel(name, el) {
+      currentChannel = name;
+      for (let c of document.querySelectorAll(".channel")) c.classList.remove("active");
+      el.classList.add("active");
+      document.getElementById("chat").innerHTML = "";
+      startPolling();
+    }
+
+    // 发送消息
+    document.getElementById("send").onclick = async () => {
+      const msg = document.getElementById("msg").value.trim();
+      if (!msg || !token || !currentChannel) return;
+      document.getElementById("msg").value = "";
+      await fetch(API_BASE + "/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token, channel: currentChannel, message: msg })
+      });
+    };
+
+    // 长轮询
+    async function startPolling() {
+      if (polling) return;
+      polling = true;
+      while (token && currentChannel) {
+        try {
+          const res = await fetch(`${API_BASE}/poll?token=${token}&channel=${encodeURIComponent(currentChannel)}`);
+          const data = await res.json();
+          if (Array.isArray(data)) {
+            for (let msg of data) appendMsg(msg);
+          }
+        } catch (err) {
+          console.error("轮询错误", err);
+          await new Promise(r => setTimeout(r, 2000));
+        }
+      }
+      polling = false;
+    }
+
+    // 显示消息
+    function appendMsg(msgObj) {
+      const chat = document.getElementById("chat");
+      const p = document.createElement("p");
+      p.textContent = `[${msgObj.user}] ${msgObj.text}`;
+      chat.appendChild(p);
+      chat.scrollTop = chat.scrollHeight;
+    }
+  </script>
+</body>
+
+</html>

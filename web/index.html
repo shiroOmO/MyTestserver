@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Ciallo～(∠・ω< )⌒★</title>
+  <style>
+    /* Reset small defaults */
+    html,body {
+      height: 100%;
+      margin: 0;
+    }
+
+    /* Fullscreen background image (cover) */
+    .bg {
+      position: fixed;      /* stay fixed behind content */
+      inset: 0;             /* top/right/bottom/left = 0 */
+      background-image: url("./bg.png"); /* <-- put your image here */
+      background-size: cover;    /* scale to cover, may crop */
+      background-position: center center;
+      background-repeat: no-repeat;
+      z-index: -1;          /* behind page content */
+      filter: brightness(0.6); /* darken a bit so text is readable */
+    }
+
+    /* Centering container */
+    .center {
+      min-height: 100vh;    /* full viewport height */
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 2rem;
+      box-sizing: border-box;
+    }
+
+    /* The text card */
+    .card {
+      color: #fff;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      font-size: clamp(18px, 3vw, 36px);
+      line-height: 1.2;
+      letter-spacing: 0.2px;
+      background: rgba(0,0,0,0.25); /* subtle translucent backdrop */
+      padding: 1.25rem 1.75rem;
+      border-radius: 12px;
+      box-shadow: 0 6px 24px rgba(0,0,0,0.45);
+      backdrop-filter: blur(4px); /* optional */
+    }
+
+    .card small {
+      display: block;
+      font-size: 0.75em;
+      opacity: 0.85;
+      margin-top: 0.6rem;
+    }
+
+    /* Mobile tweak: reduce padding */
+    @media (max-width: 420px) {
+      .card { padding: 0.9rem 1rem; border-radius: 8px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="bg" aria-hidden="true"></div>
+
+  <main class="center">
+    <div class="card" role="region" aria-label="Demo text">
+      <div>Welcome to shiroOmO's Web Server</div>
+      <small>正在施工中...</small>
+    </div>
+  </main>
+</body>
+</html>
