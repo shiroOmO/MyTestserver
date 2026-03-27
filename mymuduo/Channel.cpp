@@ -117,7 +117,7 @@ void Channel::update() {
 }
 
 void Channel::handleEventWithGuard(Timestamp receiveTime) {
-    LOG_DEBUG("%s:%s:%d => socket fd=%d will handle event, revents_=%d.", __FILENAME__, __FUNCTION__, __LINE__, fd_, revents_);
+    LOG_DEBUG("socket fd=%d will handle event, revents_=%d.", fd_, revents_);
 
     if((revents_ & EPOLLHUP) && !(revents_ & EPOLLIN)) {
         if(closeCallback_)

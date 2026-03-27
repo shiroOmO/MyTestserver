@@ -20,12 +20,12 @@ int Socket::fd() const {
 
 void Socket::bindAddress(const InetAddress &localaddr) {
     if(bind(sockfd_, (sockaddr*)localaddr.getSockAddr(), sizeof(sockaddr_in)) != 0)
-        LOG_FATAL("%s:%s:%d => listen socket fd bind address fail, exit.", __FILENAME__, __FUNCTION__, __LINE__);
+        LOG_FATAL("listen socket fd bind address fail, exit.");
 }
 
 void Socket::listen() {
     if(::listen(sockfd_, 1024) != 0)
-        LOG_FATAL("%s:%s:%d => listen socket fd listen fail, exit.", __FILENAME__, __FUNCTION__, __LINE__);
+        LOG_FATAL("listen socket fd listen fail, exit.");
 }
 
 
@@ -41,7 +41,7 @@ int Socket::accept(InetAddress *peerAddr) {
 
 void Socket::shutdownWrite() {
     if(shutdown(sockfd_, SHUT_WR) < 0)
-        LOG_ERROR("%s:%s:%d => socket fd=%d shutdown write fail.", __FILENAME__, __FUNCTION__, __LINE__, sockfd_);
+        LOG_ERROR("socket fd=%d shutdown write fail.", sockfd_);
 }
 
 void Socket::setTcpNoDelay(bool on) {

@@ -12,7 +12,7 @@
 static int createNonBlocking() {
     int sockfd = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC, IPPROTO_TCP);
     if(sockfd < 0)
-        LOG_FATAL("%s:%s:%d => listen socket fd create fail, exit, errno=%d.", __FILENAME__, __FUNCTION__, __LINE__, errno);
+        LOG_FATAL("listen socket fd create fail, exit, errno=%d.", errno);
     return sockfd;
 }
 
@@ -58,9 +58,9 @@ void Acceptor::handleRead() {
             close(connfd);
     }
     else {
-        LOG_ERROR("%s:%s:%d => accept socket fd accept error, do not execute connection, errno=%d.", __FILENAME__, __FUNCTION__, __LINE__, errno);
+        LOG_ERROR("accept socket fd accept error, do not execute connection, errno=%d.", errno);
         if(errno == EMFILE)
-            LOG_ERROR("%s:%s:%d => socket fd reach limit, do not execute connection.", __FILENAME__, __FUNCTION__, __LINE__);
+            LOG_ERROR("socket fd reach limit, do not execute connection.");
     }
 }
 

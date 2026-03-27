@@ -16,7 +16,7 @@ const int kDeleted = 2;
 EPollPoller::EPollPoller(EventLoop *loop):
     Poller(loop), epollfd_(epoll_create1(EPOLL_CLOEXEC)), events_(kInitEventListSize) {
     if(epollfd_ < 0)
-        LOG_FATAL("%s:%s:%d => epoll fd create fail, exit, errno=%d.", __FILENAME__, __FUNCTION__, __LINE__, errno);
+        LOG_FATAL("epoll fd create fail, exit, errno=%d.", errno);
 }
 
 EPollPoller::~EPollPoller() {
@@ -24,24 +24,24 @@ EPollPoller::~EPollPoller() {
 }
 
 Timestamp EPollPoller::poll(int timeoutMs, ChannelList *activeChannels) {
-    LOG_DEBUG("%s:%s:%d => epoll fd=%d will epoll_wait(), total fd count that be listend is %lu.", __FILENAME__, __FUNCTION__, __LINE__, epollfd_, channels_.size());
+    LOG_DEBUG("epoll fd=%d will epoll_wait(), total fd count that be listend is %lu.", epollfd_, channels_.size());
 
     int numEvents = epoll_wait(epollfd_, &*events_.begin(), static_cast<int>(events_.size()), timeoutMs);
     int saveErrno = errno;
     Timestamp now(Timestamp::now());
 
     if(numEvents > 0) {
-        LOG_DEBUG("%s:%s:%d => epoll fd=%d's epoll_wait() return %d events.", __FILENAME__, __FUNCTION__, __LINE__, epollfd_, numEvents);
+        LOG_DEBUG("epoll fd=%d's epoll_wait() return %d events.", epollfd_, numEvents);
         fillActiveChannels(numEvents, activeChannels);
         if(numEvents == events_.size())
             events_.resize(events_.size() * 2);
     }
     else if(numEvents == 0)
-        LOG_DEBUG("%s:%s:%d => epoll fd=%d's epoll_wait() timeout.", __FILENAME__, __FUNCTION__, __LINE__, epollfd_);
+        LOG_DEBUG("epoll fd=%d's epoll_wait() timeout.", epollfd_);
     else {
         if(saveErrno != EINTR) {
             errno = saveErrno;
-            LOG_ERROR("%s:%s:%d => epoll fd=%d's epoll_wait() fail, do not get event, errno=%d.", __FILENAME__, __FUNCTION__, __LINE__, epollfd_, errno);
+            LOG_ERROR("epoll fd=%d's epoll_wait() fail, do not get event, errno=%d.", epollfd_, errno);
         }
     }
     return now;
@@ -49,7 +49,7 @@ Timestamp EPollPoller::poll(int timeoutMs, ChannelList *activeChannels) {
 
 void EPollPoller::updateChannel(Channel *channel) {
     const int index = channel->index();
-    LOG_DEBUG("%s:%s:%d => socket fd=%d's channel will update event, events=%d, index=%d.", __FILENAME__, __FUNCTION__, __LINE__, channel->fd(), channel->events(), index);
+    LOG_DEBUG("socket fd=%d's channel will update event, events=%d, index=%d.", channel->fd(), channel->events(), index);
     if(index == kNew || index == kDeleted) {
         if(index == kNew) {
             int fd = channel->fd();
@@ -74,7 +74,7 @@ void EPollPoller::removeChannel(Channel *channel) {
     int fd = channel->fd();
     channels_.erase(fd);
 
-    LOG_DEBUG("%s:%s:%d => socket fd=%d's channel will remove.", __FILENAME__, __FUNCTION__, __LINE__, fd);
+    LOG_DEBUG("socket fd=%d's channel will remove.", fd);
 
     int index = channel->index();
     if(index == kAdded)
@@ -101,9 +101,9 @@ void EPollPoller::update(int operation, Channel *channel) {
 
     if(epoll_ctl(epollfd_, operation, fd, &event) < 0) {
         if(operation == EPOLL_CTL_DEL)
-            LOG_ERROR("%s:%s:%d => socket fd=%d's EPOLL_CTL_DEL fail, errno=%d.", __FILENAME__, __FUNCTION__, __LINE__, fd, errno);
+            LOG_ERROR("socket fd=%d's EPOLL_CTL_DEL fail, errno=%d.", fd, errno);
         else
-            LOG_FATAL("%s:%s:%d => socket fd=%d's EPOLL_CTL_ADD/MOD fail, errno=%d.", __FILENAME__, __FUNCTION__, __LINE__, fd, errno);
+            LOG_FATAL("socket fd=%d's EPOLL_CTL_ADD/MOD fail, errno=%d.", fd, errno);
     }
 
 }

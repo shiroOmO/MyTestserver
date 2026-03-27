@@ -14,25 +14,12 @@ void Logger::setLogLevel(int level) {
     logLevel_ = level;
 }
 
-void Logger::log(std::string msg) {
-    std::string level;
-    switch(logLevel_) {
-        case INFO:
-            level = "[INFO] ";
-            break;
-        case ERROR:
-            level = "[ERROR] ";
-            break;
-        case FATAL:
-            level = "[FATAL] ";
-            break;
-        case DEBUG:
-            level = "[DEBUG] ";
-            break;
-        default:
-            break;
-    }
+void Logger::log(const char *file, int line, std::string msg) {
+    const char *levelStr[] = {"[INFO]", "[ERROR]", "[FATAL]", "[DEBUG]"};
 
-    std::cout << level << Timestamp::now().toString() << ": " << msg << std::endl;
+    std::cout << Timestamp::now().toString() << ' '
+        << levelStr[logLevel_] << ' '
+        << file << ':' << line << " - "
+        << msg << std::endl;
 }
 

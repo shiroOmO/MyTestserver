@@ -20,7 +20,7 @@ const int kPollTimeMs = 10000;
 static int createEventfd() {
     int evtfd = eventfd(0, EFD_NONBLOCK | EFD_CLOEXEC);
     if(evtfd < 0)
-        LOG_FATAL("%s:%s:%d => thread=%d's eventloop eventfd create fail, exit, errno=%d.", __FILENAME__, __FUNCTION__, __LINE__, CurrentThread::tid(), errno);
+        LOG_FATAL("thread=%d's eventloop eventfd create fail, exit, errno=%d.", CurrentThread::tid(), errno);
     return evtfd;
 }
 
@@ -33,9 +33,9 @@ EventLoop::EventLoop():
     wakeupFd_(createEventfd()),
     wakeupChannel_(new Channel(this, wakeupFd_)) {
     
-    LOG_INFO("%s:%s:%d => eventloop=%p create in thread=%d.", __FILENAME__, __FUNCTION__, __LINE__, this, threadId_);
+    LOG_INFO("eventloop=%p create in thread=%d.", this, threadId_);
     if(t_loopInThisThread)
-        LOG_FATAL("%s:%s:%d => another eventloop=%p exists int this thread=%d, exit.", __FILENAME__, __FUNCTION__, __LINE__, t_loopInThisThread, threadId_);
+        LOG_FATAL("another eventloop=%p exists int this thread=%d, exit.", t_loopInThisThread, threadId_);
     else
         t_loopInThisThread = this;
 
@@ -54,7 +54,7 @@ void EventLoop::loop() {
     looping_ = true;
     quit_ = false;
 
-    LOG_INFO("%s:%s:%d => thread=%d's eventloop=%p start looping.", __FILENAME__, __FUNCTION__, __LINE__, threadId_, this);
+    LOG_INFO("thread=%d's eventloop=%p start looping.", threadId_, this);
 
     while(!quit_) {
         activeChannel_.clear();
@@ -65,7 +65,7 @@ void EventLoop::loop() {
         doPendingFunctors();
     }
 
-    LOG_INFO("%s:%s:%d => thread=%d's eventloop=%p stop looping.", __FILENAME__, __FUNCTION__, __LINE__, threadId_, this);
+    LOG_INFO("thread=%d's eventloop=%p stop looping.", threadId_, this);
     looping_ = false;
 }
 
@@ -101,7 +101,7 @@ void EventLoop::wakeup() {
     uint64_t one = 1;
     ssize_t n = write(wakeupFd_, &one, sizeof one);
     if(n != sizeof one)
-        LOG_ERROR("%s:%s:%d => thread=%d's eventloop=%p wakeup write %ldB, not 8B.", __FILENAME__, __FUNCTION__, __LINE__, threadId_, this, n);
+        LOG_ERROR("thread=%d's eventloop=%p wakeup write %ldB, not 8B.", threadId_, this, n);
 }
 
 void EventLoop::updateChannel(Channel *channel) {
@@ -124,7 +124,7 @@ void EventLoop::handleRead() {
     uint64_t one = 1;
     ssize_t n = read(wakeupFd_, &one, sizeof one);
     if(n != sizeof one)
-        LOG_ERROR("%s:%s:%d => thread=%d's eventloop=%p wakeup read %ldB, not 8B", __FILENAME__, __FUNCTION__, __LINE__, threadId_, this, n);
+        LOG_ERROR("thread=%d's eventloop=%p wakeup read %ldB, not 8B", threadId_, this, n);
 }
 
 void EventLoop::doPendingFunctors() {

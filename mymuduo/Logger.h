@@ -6,15 +6,13 @@
 #include <string>
 #include <cstring>
 
-#define __FILENAME__ (strrchr("/" __FILE__, '/') + 1)
-
 #define LOG_INFO(logmsgFormat, ...) \
     do { \
         Logger &logger = Logger::instance(); \
         logger.setLogLevel(Logger::INFO); \
         char buf[1024] = {0}; \
         snprintf(buf, 1024, logmsgFormat, ##__VA_ARGS__); \
-        logger.log(buf); \
+        logger.log(__FILE__, __LINE__, buf); \
     } while(0)
 
 #define LOG_ERROR(logmsgFormat, ...) \
@@ -23,7 +21,7 @@
         logger.setLogLevel(Logger::ERROR); \
         char buf[1024] = {0}; \
         snprintf(buf, 1024, logmsgFormat, ##__VA_ARGS__); \
-        logger.log(buf); \
+        logger.log(__FILE__, __LINE__, buf); \
     } while(0)
 
 #define LOG_FATAL(logmsgFormat, ...) \
@@ -32,7 +30,7 @@
         logger.setLogLevel(Logger::FATAL); \
         char buf[1024] = {0}; \
         snprintf(buf, 1024, logmsgFormat, ##__VA_ARGS__); \
-        logger.log(buf); \
+        logger.log(__FILE__, __LINE__, buf); \
         exit(-1); \
     } while(0)
 
@@ -43,7 +41,7 @@
             logger.setLogLevel(Logger::DEBUG); \
             char buf[1024] = {0}; \
             snprintf(buf, 1024, logmsgFormat, ##__VA_ARGS__); \
-            logger.log(buf); \
+            logger.log(__FILE__, __LINE__, buf); \
         } while(0)
 #else
     #define LOG_DEBUG(logmsgFormat, ...)
@@ -60,7 +58,7 @@ public:
     };
     static Logger& instance();
     void setLogLevel(int level);
-    void log(std::string msg);
+    void log(const char *file, int line, std::string msg);
 
 private:
     int logLevel_;

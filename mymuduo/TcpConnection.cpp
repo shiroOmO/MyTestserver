@@ -17,7 +17,7 @@
 
 static EventLoop* CheckLoopNotNull(EventLoop *loop) {
     if(loop == nullptr)
-        LOG_FATAL("%s:%s:%d => loop is nullptr, new TcpConnection create fail, exit", __FILENAME__, __FUNCTION__, __LINE__);
+        LOG_FATAL("loop is nullptr, new TcpConnection create fail, exit.");
     return loop;
 }
 
@@ -42,12 +42,12 @@ TcpConnection::TcpConnection(EventLoop *loop,
     channel_->setCloseCallback(std::bind(&TcpConnection::handleClose, this));
     channel_->setErrorCallback(std::bind(&TcpConnection::handleError, this));
 
-    LOG_DEBUG("%s:%s:%d => TcpConnection=%s at socket fd=%d create.", __FILENAME__, __FUNCTION__, __LINE__, name_.c_str(), sockfd);
+    LOG_DEBUG("TcpConnection=%s at socket fd=%d create.", name_.c_str(), sockfd);
     socket_->setKeepAlive(true);
 }
 
 TcpConnection::~TcpConnection() {
-    LOG_DEBUG("%s:%s:%d => TcpConnection=%s at socket fd=%d destory, state=%d", __FILENAME__, __FUNCTION__, __LINE__, name_.c_str(), channel_->fd(), (int)state_);
+    LOG_DEBUG("TcpConnection=%s at socket fd=%d destory, state=%d", name_.c_str(), channel_->fd(), (int)state_);
 }
 
 EventLoop* TcpConnection::getLoop() const {
@@ -121,7 +121,7 @@ void TcpConnection::handleRead(Timestamp receiveTime) {
         handleClose();
     else {
         errno = savedErrno;
-        LOG_ERROR("%s:%s:%d => data read to TcpConnection=%s at socket fd=%d's buffer fail.", __FILENAME__, __FUNCTION__, __LINE__, name_.c_str(), channel_->fd());
+        LOG_ERROR("data read to TcpConnection=%s at socket fd=%d's buffer fail.",  name_.c_str(), channel_->fd());
         handleError();
     }
 }
@@ -141,14 +141,14 @@ void TcpConnection::handleWrite() {
             }
         }
         else
-            LOG_ERROR("%s:%s:%d => data write from TcpConnection=%s at socket fd=%d's buffer fail.", __FILENAME__, __FUNCTION__, __LINE__, name_.c_str(), channel_->fd());
+            LOG_ERROR("data write from TcpConnection=%s at socket fd=%d's buffer fail.", name_.c_str(), channel_->fd());
     }
     else
-        LOG_ERROR("%s:%s:%d => TcpConnection=%s at socket fd=%d is down, no more writing.", __FILENAME__, __FUNCTION__, __LINE__, name_.c_str(), channel_->fd());
+        LOG_ERROR("TcpConnection=%s at socket fd=%d is down, no more writing.", name_.c_str(), channel_->fd());
 }
 
 void TcpConnection::handleClose() {
-    LOG_DEBUG("%s:%s:%d => TcpConnection=%s at socket fd=%d will close, state=%d", __FILENAME__, __FUNCTION__, __LINE__, name_.c_str(), channel_->fd(), (int)state_);
+    LOG_DEBUG("TcpConnection=%s at socket fd=%d will close, state=%d", name_.c_str(), channel_->fd(), (int)state_);
     setState(kDisconnected);
     channel_->disableAll();
 
@@ -165,7 +165,7 @@ void TcpConnection::handleError() {
         err = errno;
     else
         err = optval;
-    LOG_ERROR("%s:%s:%d => TcpConnection=%s at socket fd=%d handleError - SO_ERROR=%d.", __FILENAME__, __FUNCTION__, __LINE__, name_.c_str(), channel_->fd(), err);
+    LOG_ERROR("TcpConnection=%s at socket fd=%d handleError - SO_ERROR=%d.", name_.c_str(), channel_->fd(), err);
 
 }
 
@@ -175,7 +175,7 @@ void TcpConnection::sendInLoop(const void *data, size_t len) {
     bool faultError = false;
 
     if(state_ == kDisconnected) {
-        LOG_ERROR("%s:%s:%d => TcpConnection=%s at socket fd=%d is disconnected, giveup writing.", __FILENAME__, __FUNCTION__, __LINE__, name_.c_str(), channel_->fd());
+        LOG_ERROR("TcpConnection=%s at socket fd=%d is disconnected, giveup writing.", name_.c_str(), channel_->fd());
         return ;
     }
     
@@ -189,7 +189,7 @@ void TcpConnection::sendInLoop(const void *data, size_t len) {
         else {
             nwrote = 0;
             if(errno != EWOULDBLOCK) {
-                LOG_ERROR("%s:%s:%d => TcpConnection=%s at socket fd=%d write data from user to TcpBuf fail.", __FILENAME__, __FUNCTION__, __LINE__, name_.c_str(), channel_->fd());
+                LOG_ERROR("TcpConnection=%s at socket fd=%d write data from user to TcpBuf fail.", name_.c_str(), channel_->fd());
                 if(errno == EPIPE || errno == ECONNRESET)
                     faultError = true;
             }
