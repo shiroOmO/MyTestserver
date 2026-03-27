@@ -1,0 +1,532 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Web Chat Room</title>
+  <style>
+    /* Reset small defaults */
+    html,body {
+      height: 100%;
+      margin: 0;
+    }
+
+    /* Fullscreen background image (cover) */
+    .bg {
+      position: fixed;
+      inset: 0;
+      background-image: url("./bg.png");
+      background-size: cover;
+      background-position: center center;
+      background-repeat: no-repeat;
+      z-index: -1;
+      filter: brightness(0.6);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      color: #fff;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    }
+
+    /* Centering container */
+    .center {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+
+    /* Base card style */
+    .card {
+      background: rgba(0,0,0,0.35);
+      padding: 1.5rem 2rem;
+      border-radius: 12px;
+      box-shadow: 0 6px 24px rgba(0,0,0,0.45);
+      backdrop-filter: blur(6px);
+    }
+
+    /* Login Panel */
+    #login-panel {
+      width: 100%;
+      max-width: 400px;
+    }
+
+    #login-panel h2 {
+      margin-top: 0;
+      margin-bottom: 1.5rem;
+      text-align: center;
+    }
+
+    .form-group {
+      margin-bottom: 1rem;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 0.3rem;
+      font-size: 0.9em;
+      opacity: 0.9;
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 0.6rem;
+      border: none;
+      border-radius: 6px;
+      background: rgba(255,255,255,0.9);
+      font-size: 1rem;
+    }
+
+    .button-group {
+      display: flex;
+      gap: 0.8rem;
+      margin-top: 1.5rem;
+    }
+
+    .button-group button {
+      flex: 1;
+      padding: 0.7rem;
+      border: none;
+      border-radius: 6px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+
+    .button-group button:hover {
+      opacity: 0.9;
+    }
+
+    #login-btn {
+      background: #4CAF50;
+      color: white;
+    }
+
+    #register-btn {
+      background: #2196F3;
+      color: white;
+    }
+
+    #error-message {
+      color: #ff6b6b;
+      margin-top: 1rem;
+      text-align: center;
+      font-size: 0.9em;
+    }
+
+    /* Chat Room */
+    #chat-panel {
+      width: 100%;
+      max-width: 1000px;
+      height: 90vh;
+      display: none;
+      padding: 1rem;
+    }
+
+    #chat-container {
+      display: flex;
+      gap: 1rem;
+      height: calc(100% - 3rem);
+    }
+
+    #users-sidebar {
+      width: 200px;
+      background: rgba(0,0,0,0.25);
+      border-radius: 8px;
+      padding: 0.8rem;
+      overflow-y: auto;
+    }
+
+    #users-sidebar h3 {
+      margin-top: 0;
+      margin-bottom: 0.6rem;
+      font-size: 1em;
+      border-bottom: 1px solid rgba(255,255,255,0.2);
+      padding-bottom: 0.5rem;
+    }
+
+    #user-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    #user-list li {
+      padding: 0.3rem 0.5rem;
+      margin-bottom: 0.2rem;
+      background: rgba(255,255,255,0.1);
+      border-radius: 4px;
+      font-size: 0.9em;
+    }
+
+    #chat-main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 0.8rem;
+    }
+
+    #messages {
+      flex: 1;
+      background: rgba(0,0,0,0.25);
+      border-radius: 8px;
+      padding: 0.8rem;
+      overflow-y: auto;
+    }
+
+    .message {
+      margin-bottom: 0.8rem;
+      padding: 0.5rem 0.8rem;
+      background: rgba(255,255,255,0.1);
+      border-radius: 6px;
+    }
+
+    .message .sender {
+      font-weight: bold;
+      font-size: 0.9em;
+      color: #87ceeb;
+    }
+
+    .message .content {
+      margin-top: 0.2rem;
+      word-wrap: break-word;
+    }
+
+    .message .time {
+      font-size: 0.75em;
+      opacity: 0.7;
+      text-align: right;
+    }
+
+    #input-area {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    #message-input {
+      flex: 1;
+      padding: 0.6rem;
+      border: none;
+      border-radius: 6px;
+      background: rgba(255,255,255,0.9);
+      font-size: 1rem;
+    }
+
+    #send-btn, #logout-btn {
+      padding: 0.6rem 1.2rem;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      color: white;
+    }
+
+    #send-btn {
+      background: #4CAF50;
+    }
+
+    #logout-btn {
+      background: #f44336;
+    }
+
+    /* Mobile tweak */
+    @media (max-width: 768px) {
+      #chat-panel {
+        height: 100vh;
+        padding: 0.5rem;
+      }
+      #users-sidebar {
+        display: none;
+      }
+      #chat-container {
+        height: calc(100% - 4rem);
+      }
+      .button-group {
+        flex-direction: column;
+      }
+    }
+
+    @media (max-width: 420px) {
+      .card { padding: 0.9rem 1rem; border-radius: 8px; }
+      #chat-panel { padding: 0.3rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="bg" aria-hidden="true"></div>
+
+  <!-- Login/Register Panel -->
+  <div id="login-panel" class="center">
+    <div class="card">
+      <h2>聊天室登录</h2>
+      <div class="form-group">
+        <label for="username">用户名</label>
+        <input type="text" id="username" placeholder="请输入用户名">
+      </div>
+      <div class="form-group">
+        <label for="password">密码</label>
+        <input type="password" id="password" placeholder="请输入密码">
+      </div>
+      <div class="button-group">
+        <button id="login-btn">登录</button>
+        <button id="register-btn">注册</button>
+      </div>
+      <div id="error-message"></div>
+    </div>
+  </div>
+
+  <!-- Chat Room Panel -->
+  <div id="chat-panel" class="card">
+    <div id="chat-container">
+      <div id="users-sidebar">
+        <h3>在线用户</h3>
+        <ul id="user-list"></ul>
+      </div>
+      <div id="chat-main">
+        <div id="messages"></div>
+        <div id="input-area">
+          <input type="text" id="message-input" placeholder="输入消息...">
+          <button id="send-btn">发送</button>
+          <button id="logout-btn">退出</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // WebSocket connection
+    let ws = null;
+    let currentUsername = '';
+
+    // Connect to WebSocket server
+    function connect() {
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const wsUrl = protocol + '//' + window.location.hostname + ':9190';
+      ws = new WebSocket(wsUrl);
+
+      ws.onopen = function() {
+        console.log('WebSocket connected');
+      };
+
+      ws.onmessage = function(event) {
+        handleMessage(JSON.parse(event.data));
+      };
+
+      ws.onclose = function() {
+        console.log('WebSocket disconnected');
+        showLoginPanel();
+        showError('连接已断开，请重新登录');
+      };
+
+      ws.onerror = function(error) {
+        console.error('WebSocket error:', error);
+        showError('连接出错');
+      };
+    }
+
+    function disconnect() {
+      if (ws) {
+        ws.close();
+        ws = null;
+      }
+      currentUsername = '';
+    }
+
+    function showLoginPanel() {
+      document.getElementById('login-panel').style.display = 'flex';
+      document.getElementById('chat-panel').style.display = 'none';
+    }
+
+    function showChatPanel() {
+      document.getElementById('login-panel').style.display = 'none';
+      document.getElementById('chat-panel').style.display = 'block';
+    }
+
+    function showError(message) {
+      document.getElementById('error-message').textContent = message;
+    }
+
+    function clearError() {
+      document.getElementById('error-message').textContent = '';
+    }
+
+    function updateUserList(users) {
+      const list = document.getElementById('user-list');
+      list.innerHTML = '';
+      users.forEach(user => {
+        const li = document.createElement('li');
+        li.textContent = user;
+        list.appendChild(li);
+      });
+    }
+
+    function appendMessage(sender, content, timestamp) {
+      const messagesDiv = document.getElementById('messages');
+      const msgDiv = document.createElement('div');
+      msgDiv.className = 'message';
+
+      const senderSpan = document.createElement('div');
+      senderSpan.className = 'sender';
+      senderSpan.textContent = sender;
+
+      const contentDiv = document.createElement('div');
+      contentDiv.className = 'content';
+      contentDiv.textContent = content;
+
+      const timeDiv = document.createElement('div');
+      timeDiv.className = 'time';
+      timeDiv.textContent = new Date(timestamp * 1000).toLocaleString();
+
+      msgDiv.appendChild(senderSpan);
+      msgDiv.appendChild(contentDiv);
+      msgDiv.appendChild(timeDiv);
+      messagesDiv.appendChild(msgDiv);
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
+
+    function loadHistory(messages) {
+      const messagesDiv = document.getElementById('messages');
+      messagesDiv.innerHTML = '';
+      messages.forEach(msg => {
+        appendMessage(msg.sender, msg.content, Date.parse(msg.timestamp) / 1000);
+      });
+    }
+
+    function handleMessage(msg) {
+      switch (msg.msgType) {
+        case 'register_resp':
+          if (msg.success) {
+            showError('注册成功，请登录');
+          } else {
+            showError(msg.error);
+          }
+          break;
+
+        case 'login_resp':
+          if (msg.success) {
+            currentUsername = document.getElementById('username').value;
+            updateUserList(msg.onlineUsers);
+            showChatPanel();
+            // Request message history
+            sendMessage({msgType: 'get_history', limit: 50});
+          } else {
+            showError(msg.error);
+          }
+          break;
+
+        case 'logout_resp':
+          if (msg.success) {
+            disconnect();
+            showLoginPanel();
+          }
+          break;
+
+        case 'broadcast':
+          appendMessage(msg.sender, msg.content, msg.timestamp);
+          break;
+
+        case 'history':
+          loadHistory(msg.messages);
+          break;
+
+        case 'error':
+          console.error('Server error:', msg.error);
+          alert('错误: ' + msg.error);
+          break;
+
+        case 'heartbeat_resp':
+          // Nothing to do, just keep alive
+          break;
+
+        default:
+          console.log('Unknown message type:', msg.msgType);
+      }
+    }
+
+    function sendMessage(data) {
+      if (!ws || ws.readyState !== WebSocket.OPEN) {
+        showError('连接未打开，请重新连接');
+        return false;
+      }
+      ws.send(JSON.stringify(data));
+      return true;
+    }
+
+    // Event handlers
+    document.getElementById('login-btn').addEventListener('click', function() {
+      clearError();
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value;
+
+      if (!username || !password) {
+        showError('请输入用户名和密码');
+        return;
+      }
+
+      if (!ws || ws.readyState !== WebSocket.OPEN) {
+        connect();
+        // Wait for connection
+        setTimeout(() => {
+          sendMessage({msgType: 'login', username: username, password: password});
+        }, 300);
+      } else {
+        sendMessage({msgType: 'login', username: username, password: password});
+      }
+    });
+
+    document.getElementById('register-btn').addEventListener('click', function() {
+      clearError();
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value;
+
+      if (!username || !password) {
+        showError('请输入用户名和密码');
+        return;
+      }
+
+      if (!ws || ws.readyState !== WebSocket.OPEN) {
+        connect();
+        setTimeout(() => {
+          sendMessage({msgType: 'register', username: username, password: password});
+        }, 300);
+      } else {
+        sendMessage({msgType: 'register', username: username, password: password});
+      }
+    });
+
+    document.getElementById('send-btn').addEventListener('click', function() {
+      const input = document.getElementById('message-input');
+      const content = input.value.trim();
+      if (content) {
+        sendMessage({msgType: 'chat', content: content});
+        input.value = '';
+      }
+    });
+
+    document.getElementById('message-input').addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        document.getElementById('send-btn').click();
+      }
+    });
+
+    document.getElementById('logout-btn').addEventListener('click', function() {
+      sendMessage({msgType: 'logout'});
+    });
+
+    // Heartbeat: send ping every 25 seconds
+    setInterval(() => {
+      if (ws && ws.readyState === WebSocket.OPEN && currentUsername) {
+        sendMessage({msgType: 'heartbeat'});
+      }
+    }, 25000);
+
+    // Auto connect on page load
+    connect();
+  </script>
+</body>
+</html>

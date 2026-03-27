@@ -1,10 +1,10 @@
-#include "TestServer.h"
+#include "ChatServer.h"
 
 
 int main() {
     EventLoop loop;
-    InetAddress addr(9190, "127.0.0.1");
-    TestServer server(&loop, addr, "mytestserver");
+    InetAddress addr(9190, "0.0.0.0");
+    ChatServer server(&loop, addr, "mytestserver");
 
     server.start();
     loop.loop();
