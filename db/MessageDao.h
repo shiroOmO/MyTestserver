@@ -1,9 +1,10 @@
-#ifndef MESSAGEDAO_H
-#define MESSAGEDAO_H
+#pragma once
 
 #include "DbConnection.h"
+
 #include <string>
 #include <vector>
+
 
 struct Message {
     int id;
@@ -18,11 +19,10 @@ public:
     MessageDao();
     ~MessageDao();
 
-    bool saveMessage(int userId, const std::string& content);
+    bool saveMessage(int userId, const std::string &content);
     std::vector<Message> getRecentMessages(int limit);
 
 private:
     DbConnection connection_;
 };
 
-#endif // MESSAGEDAO_H

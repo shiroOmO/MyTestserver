@@ -1,6 +1,7 @@
 #include "DbConnection.h"
 #include "Logger.h"
 
+
 DbConnection::DbConnection() : connected_(false) {
     mysql_ = mysql_init(nullptr);
     if (!mysql_) {
@@ -30,7 +31,7 @@ bool DbConnection::connected() const {
     return connected_;
 }
 
-bool DbConnection::execute(const std::string& sql) {
+bool DbConnection::execute(const std::string &sql) {
     if (!connected_) {
         return false;
     }
@@ -41,7 +42,7 @@ bool DbConnection::execute(const std::string& sql) {
     return true;
 }
 
-MYSQL_RES* DbConnection::query(const std::string& sql) {
+MYSQL_RES* DbConnection::query(const std::string &sql) {
     if (!connected_) {
         return nullptr;
     }
@@ -52,8 +53,8 @@ MYSQL_RES* DbConnection::query(const std::string& sql) {
     return mysql_store_result(mysql_);
 }
 
-std::string DbConnection::escape(const std::string& str) {
-    char* buf = new char[str.size() * 2 + 1];
+std::string DbConnection::escape(const std::string &str) {
+    char *buf = new char[str.size() * 2 + 1];
     mysql_real_escape_string(mysql_, buf, str.c_str(), str.size());
     std::string result(buf);
     delete[] buf;

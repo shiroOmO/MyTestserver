@@ -1,6 +1,7 @@
 #include "MessageDao.h"
-#include "Logger.h"
+
 #include <algorithm>
+
 
 MessageDao::MessageDao() : connection_() {
 }
@@ -8,7 +9,7 @@ MessageDao::MessageDao() : connection_() {
 MessageDao::~MessageDao() {
 }
 
-bool MessageDao::saveMessage(int userId, const std::string& content) {
+bool MessageDao::saveMessage(int userId, const std::string &content) {
     if (!connection_.connected()) {
         return false;
     }

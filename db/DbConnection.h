@@ -1,8 +1,8 @@
-#ifndef DBCONNECTION_H
-#define DBCONNECTION_H
+#pragma once
 
 #include <mysql/mysql.h>
 #include <string>
+
 
 class DbConnection {
 public:
@@ -10,13 +10,13 @@ public:
     ~DbConnection();
 
     bool connected() const;
-    bool execute(const std::string& sql);
-    MYSQL_RES* query(const std::string& sql);
-    std::string escape(const std::string& str);
+    bool execute(const std::string &sql);
+    MYSQL_RES* query(const std::string &sql);
+    std::string escape(const std::string &str);
 
 private:
-    MYSQL* mysql_;
+    MYSQL *mysql_;
     bool connected_;
 };
 
-#endif // DBCONNECTION_H
+

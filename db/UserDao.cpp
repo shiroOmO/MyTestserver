@@ -1,5 +1,5 @@
 #include "UserDao.h"
-#include "Logger.h"
+
 
 UserDao::UserDao() : connection_() {
 }
@@ -7,7 +7,7 @@ UserDao::UserDao() : connection_() {
 UserDao::~UserDao() {
 }
 
-bool UserDao::insertUser(const std::string& username, const std::string& password) {
+bool UserDao::insertUser(const std::string &username, const std::string &password) {
     if (!connection_.connected()) {
         return false;
     }
@@ -21,7 +21,7 @@ bool UserDao::insertUser(const std::string& username, const std::string& passwor
     return connection_.execute(sql);
 }
 
-bool UserDao::verifyUser(const std::string& username, const std::string& password) {
+bool UserDao::verifyUser(const std::string &username, const std::string &password) {
     auto user = getUserByUsername(username);
     if (!user) {
         return false;
@@ -29,7 +29,7 @@ bool UserDao::verifyUser(const std::string& username, const std::string& passwor
     return user->password == password;
 }
 
-std::shared_ptr<User> UserDao::getUserByUsername(const std::string& username) {
+std::shared_ptr<User> UserDao::getUserByUsername(const std::string &username) {
     if (!connection_.connected()) {
         return nullptr;
     }
@@ -37,7 +37,7 @@ std::shared_ptr<User> UserDao::getUserByUsername(const std::string& username) {
     std::string escapedUsername = connection_.escape(username);
     std::string sql = "SELECT id, username, password FROM users WHERE username = '" + escapedUsername + "'";
 
-    MYSQL_RES* result = connection_.query(sql);
+    MYSQL_RES *result = connection_.query(sql);
     if (!result) {
         return nullptr;
     }
@@ -57,6 +57,6 @@ std::shared_ptr<User> UserDao::getUserByUsername(const std::string& username) {
     return user;
 }
 
-bool UserDao::userExists(const std::string& username) {
+bool UserDao::userExists(const std::string &username) {
     return getUserByUsername(username) != nullptr;
 }
