@@ -1,5 +1,4 @@
-#ifndef PROTOCOL_H
-#define PROTOCOL_H
+#pragma once
 
 // JSON Protocol Message Types
 // Client -> Server
@@ -33,4 +32,3 @@
 #define FIELD_MESSAGES "messages"
 #define FIELD_LIMIT "limit"
 
-#endif // PROTOCOL_H

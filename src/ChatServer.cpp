@@ -1,20 +1,23 @@
 #include "ChatServer.h"
 #include "Protocol.h"
 #include "Logger.h"
-#include "Buffer.h"
 #include "json.hpp"
+#include "Buffer.h"
+#include "WebSocketHandler.h"
+
 #include <unordered_map>
 #include <fstream>
 #include <string>
 #include <sstream>
 
+
 using json = nlohmann::json;
 
-ChatServer::ChatServer(EventLoop* loop, const InetAddress& addr, const std::string& name)
-    : server_(loop, addr, name), loop_(loop) {
+ChatServer::ChatServer(EventLoop *loop, const InetAddress &addr, const std::string &name):
+    server_(loop, addr, name), loop_(loop) {
+
     server_.setConnectionCallback(std::bind(&ChatServer::onConnection, this, std::placeholders::_1));
-    server_.setMessageCallback(std::bind(&ChatServer::onMessage, this,
-        std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+    server_.setMessageCallback(std::bind(&ChatServer::onMessage, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
     server_.setThreadNum(3);
     chatService_.reset(new ChatService());
 }
@@ -27,8 +30,8 @@ void ChatServer::start() {
     server_.start();
 }
 
-void ChatServer::onConnection(const TcpConnectionPtr& conn) {
-    if (conn->connected()) {
+void ChatServer::onConnection(const TcpConnectionPtr &conn) {
+    if(conn->connected()) {
         LOG_INFO("Connection from %s is UP", conn->peerAddress().toIpPort().c_str());
         // Initialize connection state
         ConnectionState state;
@@ -36,10 +39,11 @@ void ChatServer::onConnection(const TcpConnectionPtr& conn) {
         state.handshakeComplete = false;
         state.username = "";
         connectionStates_[conn] = state;
-    } else {
+    }
+    else {
         LOG_INFO("Connection from %s is DOWN", conn->peerAddress().toIpPort().c_str());
         auto it = connectionStates_.find(conn);
-        if (it != connectionStates_.end() && !it->second.username.empty()) {
+        if(it != connectionStates_.end() && !it->second.username.empty()) {
             chatService_->onDisconnect(it->second.username);
         }
         connectionStates_.erase(conn);
@@ -47,30 +51,31 @@ void ChatServer::onConnection(const TcpConnectionPtr& conn) {
     }
 }
 
-bool ChatServer::handleHttpRequest(const TcpConnectionPtr& conn, const std::string& request) {
+bool ChatServer::handleHttpRequest(const TcpConnectionPtr &conn, const std::string &request) {
     // If this is a WebSocket upgrade request, don't handle it as static file
-    if (WebSocketHandler::isWebSocketUpgrade(request)) {
+    if(WebSocketHandler::isWebSocketUpgrade(request)) {
         return false;  // Let it go to WebSocket handshake processing
     }
 
     // Parse request method and path
-    if (request.substr(0, 3) == "GET") {
+    if(request.substr(0, 3) == "GET") {
         size_t pathStart = 4;
         size_t pathEnd = request.find(" ", pathStart);
-        if (pathEnd == std::string::npos) {
+        if(pathEnd == std::string::npos) {
             return false;
         }
+        
         std::string path = request.substr(pathStart, pathEnd - pathStart);
 
         // Default to chat.html
         std::string filePath;
-        if (path == "/" || path == "/chat.html") {
-            filePath = std::string(CMAKE_SOURCE_DIR) + "/web/chat.html";
-        } else if (path == "/bg.png") {
-            filePath = std::string(CMAKE_SOURCE_DIR) + "/web/bg.png";
-        } else if (path == "/index.html") {
-            filePath = std::string(CMAKE_SOURCE_DIR) + "/web/index.html";
-        } else {
+        if(path == "/" || path == "/chat.html")
+            filePath = "/home/admin/wcztmdd/MyTestserver/web/chat.html";
+        else if(path == "/bg.png")
+            filePath = "/home/admin/wcztmdd/MyTestserver/web/bg.png";
+        else if(path == "/index.html")
+            filePath = "/home/admin/wcztmdd/MyTestserver/web/index.html";
+        else {
             // 404
             conn->send("HTTP/1.1 404 Not Found\r\nContent-Type: text/plain\r\n\r\n404 Not Found");
             conn->shutdown();
@@ -79,7 +84,7 @@ bool ChatServer::handleHttpRequest(const TcpConnectionPtr& conn, const std::stri
 
         // Read file
         std::ifstream file(filePath, std::ios::binary);
-        if (!file.is_open()) {
+        if(!file.is_open()) {
             conn->send("HTTP/1.1 404 Not Found\r\nContent-Type: text/plain\r\n\r\nFile not found");
             conn->shutdown();
             return true;
@@ -91,13 +96,12 @@ bool ChatServer::handleHttpRequest(const TcpConnectionPtr& conn, const std::stri
 
         // Determine content type
         std::string contentType;
-        if (filePath.find(".html") != std::string::npos) {
+        if(filePath.find(".html") != std::string::npos)
             contentType = "text/html; charset=utf-8";
-        } else if (filePath.find(".png") != std::string::npos) {
+        else if(filePath.find(".png") != std::string::npos)
             contentType = "image/png";
-        } else {
+        else
             contentType = "text/plain";
-        }
 
         // Build response
         std::ostringstream response;
@@ -117,24 +121,25 @@ bool ChatServer::handleHttpRequest(const TcpConnectionPtr& conn, const std::stri
     return false;
 }
 
-void ChatServer::onMessage(const TcpConnectionPtr& conn, Buffer* buffer, Timestamp time) {
-    auto& state = connectionStates_[conn];
+void ChatServer::onMessage(const TcpConnectionPtr &conn, Buffer *buffer, Timestamp time) {
+    auto &state = connectionStates_[conn];
     std::string data = buffer->retrieveAllAsString();
 
-    if (!state.handshakeComplete) {
+    if(!state.handshakeComplete) {
         // First check if it's a normal HTTP GET request for static files
-        if (handleHttpRequest(conn, data)) {
+        if(handleHttpRequest(conn, data)) {
             return;
         }
 
         // Check if this is a WebSocket upgrade request
-        if (WebSocketHandler::isWebSocketUpgrade(data)) {
+        if(WebSocketHandler::isWebSocketUpgrade(data)) {
             state.isWebSocket = true;
             std::string response = WebSocketHandler::generateHandshakeResponse(data);
             conn->send(response);
             state.handshakeComplete = true;
             LOG_INFO("WebSocket handshake complete for %s", conn->peerAddress().toIpPort().c_str());
-        } else {
+        }
+        else {
             // Unsupported request
             conn->send("HTTP/1.1 400 Bad Request\r\n\r\nBad Request");
             conn->shutdown();
@@ -142,49 +147,56 @@ void ChatServer::onMessage(const TcpConnectionPtr& conn, Buffer* buffer, Timesta
         return;
     }
 
-    if (state.isWebSocket && state.handshakeComplete) {
+    if(state.isWebSocket && state.handshakeComplete) {
         std::string payload;
-        if (WebSocketHandler::parseFrame(data, payload)) {
-            if (!payload.empty()) {
+        if(WebSocketHandler::parseFrame(data, payload)) {
+            if(!payload.empty()) {
                 handleWebSocketMessage(conn, payload);
             }
         }
     }
 }
 
-void ChatServer::handleWebSocketMessage(const TcpConnectionPtr& conn, const std::string& payload) {
-    auto& state = connectionStates_[conn];
+void ChatServer::handleWebSocketMessage(const TcpConnectionPtr &conn, const std::string &payload) {
+    auto &state = connectionStates_[conn];
 
     try {
         json j = json::parse(payload);
         std::string msgType = j[FIELD_MSG_TYPE];
 
-        if (msgType == MSG_TYPE_REGISTER) {
+        if(msgType == MSG_TYPE_REGISTER) {
             std::string username = j.value(FIELD_USERNAME, "");
             std::string password = j.value(FIELD_PASSWORD, "");
             chatService_->handleRegister(username, password, conn, state.username);
-        } else if (msgType == MSG_TYPE_LOGIN) {
+        }
+        else if(msgType == MSG_TYPE_LOGIN) {
             std::string username = j.value(FIELD_USERNAME, "");
             std::string password = j.value(FIELD_PASSWORD, "");
             state.username = username;
             chatService_->handleLogin(username, password, conn);
             // Get message history after successful login
             chatService_->handleGetHistory(conn, 50);
-        } else if (msgType == MSG_TYPE_LOGOUT) {
+        }
+        else if(msgType == MSG_TYPE_LOGOUT) {
             chatService_->handleLogout(state.username, conn);
             state.username = "";
-        } else if (msgType == MSG_TYPE_CHAT) {
+        }
+        else if(msgType == MSG_TYPE_CHAT) {
             std::string content = j.value(FIELD_CONTENT, "");
             chatService_->handleChat(state.username, content);
-        } else if (msgType == MSG_TYPE_HEARTBEAT) {
+        }
+        else if(msgType == MSG_TYPE_HEARTBEAT) {
             chatService_->handleHeartbeat(state.username);
-        } else if (msgType == MSG_TYPE_GET_HISTORY) {
+        }
+        else if(msgType == MSG_TYPE_GET_HISTORY) {
             int limit = j.value(FIELD_LIMIT, 50);
             chatService_->handleGetHistory(conn, limit);
-        } else {
+        }
+        else {
             LOG_INFO("Unknown message type: %s", msgType.c_str());
         }
-    } catch (const json::parse_error& e) {
+    }
+    catch(const json::parse_error &e) {
         LOG_ERROR("JSON parse error: %s", e.what());
         json error;
         error[FIELD_MSG_TYPE] = MSG_TYPE_ERROR;
@@ -194,9 +206,9 @@ void ChatServer::handleWebSocketMessage(const TcpConnectionPtr& conn, const std:
     }
 }
 
-std::string ChatServer::getCurrentUsername(const TcpConnectionPtr& conn) {
+std::string ChatServer::getCurrentUsername(const TcpConnectionPtr &conn) {
     auto it = connectionStates_.find(conn);
-    if (it != connectionStates_.end()) {
+    if(it != connectionStates_.end()) {
         return it->second.username;
     }
     return "";
