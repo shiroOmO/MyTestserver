@@ -60,3 +60,15 @@ std::shared_ptr<User> UserDao::getUserByUsername(const std::string &username) {
 bool UserDao::userExists(const std::string &username) {
     return getUserByUsername(username) != nullptr;
 }
+
+bool UserDao::heartBeat() {
+    if (!connection_.connected()) {
+        return false;
+    }
+
+    std::string sql = "SELECT 1";
+    MYSQL_RES *result = connection_.query(sql);
+
+    return result ? true : false;
+}
+

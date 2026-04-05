@@ -53,3 +53,15 @@ std::vector<Message> MessageDao::getRecentMessages(int limit) {
     std::reverse(messages.begin(), messages.end());
     return messages;
 }
+
+bool MessageDao::heartBeat() {
+    if (!connection_.connected()) {
+        return false;
+    }
+
+    std::string sql = "SELECT 1";
+    MYSQL_RES *result = connection_.query(sql);
+
+    return result ? true : false;
+}
+

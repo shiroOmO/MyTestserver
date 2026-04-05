@@ -19,6 +19,7 @@ public:
     void handleHeartbeat(const std::string &username);
     void handleGetHistory(const TcpConnectionPtr &conn, int limit);
     void onDisconnect(const std::string &username);
+    void keepMySQLAlive();
 
 private:
     void sendResponse(const TcpConnectionPtr &conn, const std::string &json);

@@ -3,6 +3,7 @@
 #include "CurrentThread.h"
 #include "Logger.h"
 #include "Poller.h"
+#include "TimerQueue.h"
 
 #include <cerrno>
 #include <cstdint>
@@ -30,6 +31,7 @@ EventLoop::EventLoop():
     callingPendingFunctors_(false),
     threadId_(CurrentThread::tid()),
     poller_(Poller::newDefaultPoller(this)),
+    timerQueue_(new TimerQueue(this)),
     wakeupFd_(createEventfd()),
     wakeupChannel_(new Channel(this, wakeupFd_)) {
     
@@ -75,6 +77,10 @@ void EventLoop::quit() {
         wakeup();
 }
 
+TimerId EventLoop::runEvery(double interval, TimerCallback cb) {
+    Timestamp time(addTime(Timestamp::now(), interval));
+    return timerQueue_->addTimer(std::move(cb), time, interval);
+}
 
 Timestamp EventLoop::pollReturnTime() const {
     return pollReturnTime_;

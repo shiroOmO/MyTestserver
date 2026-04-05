@@ -21,6 +21,7 @@ public:
     bool verifyUser(const std::string &username, const std::string &password);
     std::shared_ptr<User> getUserByUsername(const std::string &username);
     bool userExists(const std::string &username);
+    bool heartBeat();
 
 private:
     DbConnection connection_;

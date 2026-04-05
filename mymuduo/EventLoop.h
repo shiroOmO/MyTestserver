@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Callbacks.h"
+#include "TimerId.h"
 #include "Timestamp.h"
 #include "noncopyable.h"
 
@@ -13,6 +15,7 @@
 
 class Channel;
 class Poller;
+class TimerQueue;
 
 class EventLoop: noncopyable {
 public:
@@ -31,6 +34,7 @@ public:
 
     void runInLoop(Functor cb);
     void queueInLoop(Functor cb);
+    TimerId runEvery(double interval, TimerCallback cb);
 
     void wakeup();
 
@@ -51,6 +55,7 @@ private:
 
     Timestamp pollReturnTime_;
     std::unique_ptr<Poller> poller_;
+    std::unique_ptr<TimerQueue> timerQueue_;
 
     int wakeupFd_;
     std::unique_ptr<Channel> wakeupChannel_;

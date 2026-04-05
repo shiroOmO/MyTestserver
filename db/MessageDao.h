@@ -21,6 +21,7 @@ public:
 
     bool saveMessage(int userId, const std::string &content);
     std::vector<Message> getRecentMessages(int limit);
+    bool heartBeat();
 
 private:
     DbConnection connection_;

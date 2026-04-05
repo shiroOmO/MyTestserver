@@ -20,6 +20,8 @@ ChatServer::ChatServer(EventLoop *loop, const InetAddress &addr, const std::stri
     server_.setMessageCallback(std::bind(&ChatServer::onMessage, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
     server_.setThreadNum(3);
     chatService_.reset(new ChatService());
+
+    loop_->runEvery(60 * 60 * 3, std::bind(&ChatServer::onTimer, this));
 }
 
 ChatServer::~ChatServer() {
@@ -155,6 +157,10 @@ void ChatServer::onMessage(const TcpConnectionPtr &conn, Buffer *buffer, Timesta
             }
         }
     }
+}
+
+void ChatServer::onTimer() {
+    chatService_->keepMySQLAlive();
 }
 
 void ChatServer::handleWebSocketMessage(const TcpConnectionPtr &conn, const std::string &payload) {

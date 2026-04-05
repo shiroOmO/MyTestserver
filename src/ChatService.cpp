@@ -158,3 +158,13 @@ void ChatService::onDisconnect(const std::string &username) {
         sessionManager_->removeSession(username);
     }
 }
+
+void ChatService::keepMySQLAlive() {
+    if(!userDao_->heartBeat())
+        LOG_FATAL("keepMySQLAlive Fatal! userDao_ disconnection. ");
+    if(!messageDao_->heartBeat())
+        LOG_FATAL("keepMySQLAlive Fatal! messageDao_ disconnection. ");
+    LOG_INFO("keepMySQLAlive success.");
+}
+
+
