@@ -120,11 +120,14 @@
     }
 
     /* Chat Room */
+    #chat-panel-container {
+      display: none;
+    }
+
     #chat-panel {
       width: 100%;
       max-width: 1000px;
       height: 90vh;
-      display: none;
       padding: 1rem;
     }
 
@@ -195,6 +198,9 @@
     .message .content {
       margin-top: 0.2rem;
       word-wrap: break-word;
+      overflow-wrap: break-word;
+      white-space: pre-wrap;
+      word-break: break-word;
     }
 
     .message .time {
@@ -281,18 +287,20 @@
   </div>
 
   <!-- Chat Room Panel -->
-  <div id="chat-panel" class="card">
-    <div id="chat-container">
-      <div id="users-sidebar">
-        <h3>在线用户</h3>
-        <ul id="user-list"></ul>
-      </div>
-      <div id="chat-main">
-        <div id="messages"></div>
-        <div id="input-area">
-          <input type="text" id="message-input" placeholder="输入消息...">
-          <button id="send-btn">发送</button>
-          <button id="logout-btn">退出</button>
+  <div id="chat-panel-container" class="center">
+    <div id="chat-panel" class="card">
+      <div id="chat-container">
+        <div id="users-sidebar">
+          <h3>在线用户</h3>
+          <ul id="user-list"></ul>
+        </div>
+        <div id="chat-main">
+          <div id="messages"></div>
+          <div id="input-area">
+            <input type="text" id="message-input" placeholder="输入消息...">
+            <button id="send-btn">发送</button>
+            <button id="logout-btn">退出</button>
+          </div>
         </div>
       </div>
     </div>
@@ -339,12 +347,12 @@
 
     function showLoginPanel() {
       document.getElementById('login-panel').style.display = 'flex';
-      document.getElementById('chat-panel').style.display = 'none';
+      document.getElementById('chat-panel-container').style.display = 'none';
     }
 
     function showChatPanel() {
       document.getElementById('login-panel').style.display = 'none';
-      document.getElementById('chat-panel').style.display = 'block';
+      document.getElementById('chat-panel-container').style.display = 'flex';
     }
 
     function showError(message) {

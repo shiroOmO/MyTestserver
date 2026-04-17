@@ -125,9 +125,10 @@ bool ChatServer::handleHttpRequest(const TcpConnectionPtr &conn, const std::stri
 
 void ChatServer::onMessage(const TcpConnectionPtr &conn, Buffer *buffer, Timestamp time) {
     auto &state = connectionStates_[conn];
-    std::string data = buffer->retrieveAllAsString();
 
     if(!state.handshakeComplete) {
+        // Handshake not complete - need full request in buffer
+        std::string data = buffer->retrieveAllAsString();
         // First check if it's a normal HTTP GET request for static files
         if(handleHttpRequest(conn, data)) {
             return;
@@ -150,10 +151,22 @@ void ChatServer::onMessage(const TcpConnectionPtr &conn, Buffer *buffer, Timesta
     }
 
     if(state.isWebSocket && state.handshakeComplete) {
-        std::string payload;
-        if(WebSocketHandler::parseFrame(data, payload)) {
-            if(!payload.empty()) {
-                handleWebSocketMessage(conn, payload);
+        // Parse as many complete frames as available in the buffer
+        while (buffer->readableBytes() > 0) {
+            const char *dataPtr = buffer->peek();
+            size_t readableLen = buffer->readableBytes();
+            std::string payload;
+            size_t frameLen;
+
+            if (WebSocketHandler::parseFrame(dataPtr, readableLen, payload, frameLen)) {
+                // Got a complete frame - consume it
+                if (!payload.empty()) {
+                    handleWebSocketMessage(conn, payload);
+                }
+                buffer->retrieve(frameLen);
+            } else {
+                // Incomplete frame, leave remaining data in buffer for next read
+                break;
             }
         }
     }

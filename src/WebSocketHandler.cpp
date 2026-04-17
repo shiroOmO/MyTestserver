@@ -76,11 +76,16 @@ std::string WebSocketHandler::generateHandshakeResponse(const std::string &reque
 }
 
 bool WebSocketHandler::parseFrame(const std::string &data, std::string &outMessage) {
-    if(data.size() < 2) {
+    size_t frameLen;
+    return parseFrame(data.c_str(), data.size(), outMessage, frameLen);
+}
+
+bool WebSocketHandler::parseFrame(const char *data, size_t dataLen, std::string &outMessage, size_t &frameLen) {
+    if(dataLen < 2) {
         return false;
     }
 
-    const unsigned char *bytes = reinterpret_cast<const unsigned char*>(data.c_str());
+    const unsigned char *bytes = reinterpret_cast<const unsigned char*>(data);
     size_t pos = 0;
 
     // First byte: FIN and Opcode
@@ -100,13 +105,13 @@ bool WebSocketHandler::parseFrame(const std::string &data, std::string &outMessa
 
     // Handle extended payload length
     if(payloadLen == 126) {
-        if(data.size() < pos + 2)
+        if(dataLen < pos + 2)
             return false;
         payloadLen = (bytes[pos] << 8) | bytes[pos + 1];
         pos += 2;
     }
     else if(payloadLen == 127) {
-        if(data.size() < pos + 8)
+        if(dataLen < pos + 8)
             return false;
         payloadLen = 0;
         for(int i = 0; i < 8; i++) {
@@ -118,7 +123,7 @@ bool WebSocketHandler::parseFrame(const std::string &data, std::string &outMessa
     // Get masking key
     unsigned char maskingKey[4];
     if(masked) {
-        if(data.size() < pos + 4)
+        if(dataLen < pos + 4)
             return false;
         for(int i = 0; i < 4; i++) {
             maskingKey[i] = bytes[pos + i];
@@ -127,9 +132,12 @@ bool WebSocketHandler::parseFrame(const std::string &data, std::string &outMessa
     }
 
     // Check we have all payload
-    if(data.size() < pos + payloadLen) {
+    if(dataLen < pos + payloadLen) {
         return false;
     }
+
+    // Calculate total frame length
+    frameLen = pos + payloadLen;
 
     // Unmask payload
     outMessage.clear();
