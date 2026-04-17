@@ -77,10 +77,11 @@ std::string WebSocketHandler::generateHandshakeResponse(const std::string &reque
 
 bool WebSocketHandler::parseFrame(const std::string &data, std::string &outMessage) {
     size_t frameLen;
-    return parseFrame(data.c_str(), data.size(), outMessage, frameLen);
+    unsigned char opcode;
+    return parseFrame(data.c_str(), data.size(), outMessage, frameLen, opcode);
 }
 
-bool WebSocketHandler::parseFrame(const char *data, size_t dataLen, std::string &outMessage, size_t &frameLen) {
+bool WebSocketHandler::parseFrame(const char *data, size_t dataLen, std::string &outMessage, size_t &frameLen, unsigned char &outOpcode) {
     if(dataLen < 2) {
         return false;
     }
@@ -92,8 +93,9 @@ bool WebSocketHandler::parseFrame(const char *data, size_t dataLen, std::string 
     unsigned char firstByte = bytes[pos++];
     bool fin = (firstByte & 0x80) != 0;
     unsigned char opcode = firstByte & 0x0F;
+    outOpcode = opcode;
 
-    // We only support text frames for now
+    // We only support text frames and close frames
     if(opcode != 0x1 && opcode != 0x8) { // Text or Close
         return false;
     }

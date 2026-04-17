@@ -157,11 +157,18 @@ void ChatServer::onMessage(const TcpConnectionPtr &conn, Buffer *buffer, Timesta
             size_t readableLen = buffer->readableBytes();
             std::string payload;
             size_t frameLen;
+            unsigned char opcode;
 
-            if (WebSocketHandler::parseFrame(dataPtr, readableLen, payload, frameLen)) {
+            if (WebSocketHandler::parseFrame(dataPtr, readableLen, payload, frameLen, opcode)) {
                 // Got a complete frame - consume it
-                if (!payload.empty()) {
-                    handleWebSocketMessage(conn, payload);
+                if (opcode == 0x1) { // Text frame
+                    if (!payload.empty()) {
+                        handleWebSocketMessage(conn, payload);
+                    }
+                } else if (opcode == 0x8) { // Close frame - initiate close
+                    LOG_INFO("Received WebSocket close frame from %s", conn->peerAddress().toIpPort().c_str());
+                    conn->shutdown();
+                    break;
                 }
                 buffer->retrieve(frameLen);
             } else {

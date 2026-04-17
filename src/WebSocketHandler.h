@@ -14,7 +14,8 @@ public:
     static bool parseFrame(const std::string &data, std::string &outMessage);
     // New: parse from buffer, returns whether a complete frame was parsed
     // on success, frameLen is set to the total bytes consumed (header + payload)
-    static bool parseFrame(const char *data, size_t dataLen, std::string &outMessage, size_t &frameLen);
+    // opcode is output to indicate frame type (0x1 = text, 0x8 = close)
+    static bool parseFrame(const char *data, size_t dataLen, std::string &outMessage, size_t &frameLen, unsigned char &opcode);
     static std::string encodeFrame(const std::string &message);
 
 private:
